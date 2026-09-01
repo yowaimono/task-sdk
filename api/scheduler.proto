@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package scheduler.v1;
+
+option go_package = "github.com/yowaimono/task-sdk/api/gen;schedulerv1";
+
+service Scheduler {
+  rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse);
+  rpc Work(stream WorkerMessage) returns (stream SchedulerMessage);
+  rpc SubmitTask(SubmitTaskRequest) returns (SubmitTaskResponse);
+}
+
+message RegisterWorkerRequest {
+  string worker_id = 1;
+  repeated string roles = 2;
+  uint32 slots = 3;
+}
+
+message RegisterWorkerResponse { string scheduler_id = 1; }
+
+message WorkerMessage {
+  string kind = 1;
+  string worker_id = 2;
+  PullRequest pull = 3;
+  Heartbeat heartbeat = 4;
+  TaskResult result = 5;
+}
+
+message SchedulerMessage {
+  string kind = 1;
+  TaskAssignment assignment = 2;
+}
+
+message PullRequest { uint32 max_tasks = 1; }
+message Heartbeat { string task_id = 1; int64 lease_until_unix_ms = 2; }
+
+message TaskAssignment {
+  string task_id = 1;
+  bytes payload = 2;
+  int64 lease_until_unix_ms = 3;
+  string task_name = 4;
+  string role = 5;
+  map<string, bytes> params = 6;
+  int32 attempt = 7;
+  int64 timeout_ms = 8;
+}
+
+message TaskResult {
+  string task_id = 1;
+  bool success = 2;
+  bytes output = 3;
+  string error = 4;
+}
+
+message SubmitTaskRequest {
+  string task_id = 1;
+  string task_name = 2;
+  string role = 3;
+  map<string, bytes> params = 4;
+  bytes payload = 5;
+  int32 priority = 6;
+  string schedule_type = 7;
+  int64 interval_ms = 8;
+  int64 run_at_unix_ms = 9;
+  int64 delay_ms = 10;
+  int64 timeout_ms = 11;
+  string tenant_id = 12;
+  string cron_expr = 13;
+  string timezone = 14;
+}
+
+message SubmitTaskResponse { string task_id = 1; }
